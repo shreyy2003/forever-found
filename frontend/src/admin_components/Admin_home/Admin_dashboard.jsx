@@ -12,7 +12,12 @@ import {
 
 function Admin_Dashboard() {
   const navigate = useNavigate();
+
+  const [pendingAdopterCount, setPendingAdopterCount] = useState(0);
+  const [pendingNgoCount, setPendingNgoCount] = useState(0);
   const [editRequestCount, setEditRequestCount] = useState(0);
+  const [ngoEditRequestCount, setNgoEditRequestCount] = useState(0);
+  const [childEditCount, setChildEditCount] = useState(0);
 
   const options = [
     {
@@ -43,22 +48,40 @@ function Admin_Dashboard() {
   ];
 
   useEffect(() => {
-    const fetchEditRequestCount = async () => {
+    const fetchCounts = async () => {
       try {
-        const res = await adminFetch(
-          "http://localhost:5000/api/admin/adopters/edit-requests/count"
-        );
+        const [
+          pendingAdopterRes,
+          pendingNgoRes,
+          adopterRes,
+          ngoRes,
+          childRes,
+        ] = await Promise.all([
+          adminFetch("http://localhost:5000/api/admin/adopters/pending/count"),
+          adminFetch("http://localhost:5000/api/admin/ngos/pending/count"),
+          adminFetch("http://localhost:5000/api/admin/adopters/edit-requests/count"),
+          adminFetch("http://localhost:5000/api/admin/ngos/edit-requests/count"),
+          adminFetch("http://localhost:5000/api/admin/children/edit-requests/count"),
+        ]);
 
-        if (!res.ok) throw new Error("Failed to fetch count");
+        const pendingAdopterData = await pendingAdopterRes.json();
+        const pendingNgoData = await pendingNgoRes.json();
+        const adopterData = await adopterRes.json();
+        const ngoData = await ngoRes.json();
+        const childData = await childRes.json();
 
-        const data = await res.json();
-        setEditRequestCount(data.count || 0);
+        setPendingAdopterCount(pendingAdopterData.count || 0);
+        setPendingNgoCount(pendingNgoData.count || 0);
+        setEditRequestCount(adopterData.count || 0);
+        setNgoEditRequestCount(ngoData.count || 0);
+        setChildEditCount(childData.count || 0);
+
       } catch (error) {
-        console.error("Failed to fetch edit request count:", error);
+        console.error("Failed to fetch dashboard counts:", error);
       }
     };
 
-    fetchEditRequestCount();
+    fetchCounts();
   }, []);
 
   return (
@@ -72,7 +95,11 @@ function Admin_Dashboard() {
       <div className="px-4 py-10 bg-[#e3f8fd] min-h-[calc(100vh-11rem)]">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {options.map(({ label, Icon, path }) => {
+            const isAdopterApproval = label === "Adopter Approval";
+            const isNgoApproval = label === "NGO Approval";
             const isManageAdopters = label === "Manage Adopters";
+            const isViewNgos = label === "View NGOs";
+            const isManageChildren = label === "Manage Children";
 
             return (
               <button
@@ -80,10 +107,35 @@ function Admin_Dashboard() {
                 onClick={() => navigate(path)}
                 className="relative flex flex-col items-center justify-center bg-white rounded-2xl shadow-md hover:shadow-xl p-8 transition hover:scale-105 border border-[#b2ebf2]"
               >
-                {/* Notification Badge */}
+                {/* Pending Approval Badge */}
+                {isAdopterApproval && pendingAdopterCount > 0 && (
+                  <span className="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    {pendingAdopterCount}
+                  </span>
+                )}
+                {/* Pending NGO Approval Badge */}
+                {isNgoApproval && pendingNgoCount > 0 && (
+                  <span className="absolute top-3 right-3 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    {pendingNgoCount}
+                  </span>
+                )}
+                {/* Adopter Edit Request Badge */}
                 {isManageAdopters && editRequestCount > 0 && (
                   <span className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                     {editRequestCount}
+                  </span>
+                )}
+
+                {/* NGO Edit Request Badge */}
+                {isViewNgos && ngoEditRequestCount > 0 && (
+                  <span className="absolute top-3 right-3 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    {ngoEditRequestCount}
+                  </span>
+                )}
+
+                {isManageChildren && childEditCount > 0 && (
+                  <span className="absolute top-3 right-3 bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    {childEditCount}
                   </span>
                 )}
 

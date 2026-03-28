@@ -40,8 +40,18 @@ export default function NgoProfile() {
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-2xl p-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-center md:items-start md:space-x-8 border-b pb-8 mb-8">
-          <div className="w-36 h-36 bg-green-200 text-green-800 rounded-full flex items-center justify-center text-5xl font-bold">
-            {ngo.name.charAt(0).toUpperCase()}
+          <div className="w-36 h-36 rounded-full overflow-hidden shadow-lg border">
+            {ngo.logo ? (
+              <img
+                src={ngo.logo}
+                alt="NGO Logo"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-green-200 text-green-800 flex items-center justify-center text-5xl font-bold">
+                {ngo.name.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
           <div className="mt-4 md:mt-0">
             <h2 className="text-3xl md:text-4xl font-bold capitalize text-green-900">{ngo.name}</h2>
@@ -57,39 +67,83 @@ export default function NgoProfile() {
           <p><span className="font-semibold text-green-700">Website:</span> <a href={ngo.website} target="_blank" className="underline text-blue-600">{ngo.website}</a></p>
           <p><span className="font-semibold text-green-700">Contact:</span> {ngo.contact}</p>
           <p><span className="font-semibold text-green-700">Year Established:</span> {ngo.yearOfEstablishment}</p>
-          <p><span className="font-semibold text-green-700">NGO Registration No:</span> {ngo.ngoRegistrationNumber}</p>
+          <p><span className="font-semibold text-green-700">Alternate Contact:</span> {ngo.alternateContact || "N/A"}</p>
+          <p><span className="font-semibold text-green-700">NGO Registration No:</span> {ngo.registrationNumber}</p>
           <p><span className="font-semibold text-green-700">CARA Registration No:</span> {ngo.caraRegistrationNumber}</p>
+          <p><span className="font-semibold text-green-700">Contact Person:</span> {ngo.contactPersonName || "N/A"}</p>
+          <p><span className="font-semibold text-green-700">Designation:</span> {ngo.contactPersonDesignation || "N/A"}</p>
+          <p><span className="font-semibold text-green-700">Number of Children:</span> {ngo.numberOfChildren}</p>
           <p><span className="font-semibold text-green-700">Verified:</span> {ngo.verified ? "Yes ✅" : "No ❌"}</p>
           <p className="md:col-span-2"><span className="font-semibold text-green-700">About:</span> {ngo.about}</p>
-          <p><span className="font-semibold text-green-700">Number of Children:</span> {ngo.numberOfChildren}</p>
         </div>
 
-        {/* Gallery */}
-        {ngo.gallery && ngo.gallery.length > 0 && (
-          <div className="mt-10">
-            <h3 className="text-2xl font-semibold mb-4 text-green-800">Gallery</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {ngo.gallery.map((img, idx) => (
-                <img key={idx} src={img} alt={`Gallery ${idx}`} className="rounded-lg shadow-md" />
-              ))}
+        {/* Gallery Images */}
+        {ngo.gallery && ngo.gallery.filter(img => img.type === "gallery").length > 0 && (
+          <div className="mt-12 bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl shadow-lg">
+            <h3 className="text-3xl font-bold mb-8 text-green-900 tracking-wide">
+              NGO Gallery
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {ngo.gallery
+                .filter(img => img.type === "gallery")
+                .map((img, index) => (
+                  <div
+                    key={index}
+                    className="relative overflow-hidden rounded-xl group"
+                  >
+                    <img
+                      src={img.url}
+                      alt={`Gallery ${index + 1}`}
+                      className="w-full h-64 object-contain shadow-md transform group-hover:scale-110 transition duration-500 ease-in-out"
+                    />
+
+                    {/* Soft overlay on hover */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition duration-500"></div>
+                  </div>
+                ))}
             </div>
           </div>
         )}
 
         {/* Testimonials */}
-        {ngo.testimonials && ngo.testimonials.length > 0 && (
-          <div className="mt-10">
-            <h3 className="text-2xl font-semibold mb-4 text-green-800">Testimonials</h3>
-            <div className="space-y-4">
-              {ngo.testimonials.map((t, idx) => (
-                <div key={idx} className="p-4 border rounded-md bg-green-50">
-                  <p className="font-semibold">{t.name}</p>
-                  <p className="font-semibold">({t.role})</p>
-                  <p>{t.feedback}</p>
-                </div>
-              ))}
+        {ngo.testimonials &&
+          ngo.testimonials.filter(t => t.name || t.feedback).length > 0 && (
+            <div className="mt-12 bg-green-50 p-8 rounded-xl">
+
+              <h3 className="text-3xl font-semibold mb-8 text-green-900">
+                Testimonials
+              </h3>
+
+              <div className="space-y-6">
+                {ngo.testimonials
+                  .filter(t => t.name || t.feedback)
+                  .map((t, idx) => (
+                    <div
+                      key={idx}
+                      className="w-full bg-white p-6 rounded-xl shadow-sm border"
+                    >
+                      {t.name && (
+                        <p className="font-semibold text-lg text-green-900">
+                          {t.name}
+                        </p>
+                      )}
+
+                      {t.role && (
+                        <p className="text-sm text-gray-500 mb-3">
+                          {t.role}
+                        </p>
+                      )}
+
+                      {t.feedback && (
+                        <p className="text-gray-800 leading-relaxed">
+                          "{t.feedback}"
+                        </p>
+                      )}
+                    </div>
+                  ))}
+              </div>
             </div>
-          </div>
         )}
 
         {/* Back & Edit Buttons */}

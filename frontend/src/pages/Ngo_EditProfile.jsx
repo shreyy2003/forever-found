@@ -10,10 +10,13 @@ export default function EditNgoProfile() {
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    city:"",
-    state:"",
+    city: "",
+    state: "",
     location: "",
     contact: "",
+    alternateContact: "",
+    contactPersonName: "",
+    contactPersonDesignation: "",
     website: "",
     about: "",
     numberOfChildren: 0,
@@ -30,14 +33,19 @@ export default function EditNgoProfile() {
         setNgo(data);
 
         setFormData({
-          city:data.city||"",
-          state:data.state||"",
+          city: data.city || "",
+          state: data.state || "",
           location: data.location || "",
           contact: data.contact || "",
+          alternateContact: data.alternateContact || "",
+          contactPersonName: data.contactPersonName || "",
+          contactPersonDesignation: data.contactPersonDesignation || "",
           website: data.website || "",
           about: data.about || "",
           numberOfChildren: data.numberOfChildren || 0,
-          gallery: [...(data.gallery || [])].slice(0, 3),
+          gallery: (data.gallery || [])
+            .filter((img) => img.type === "gallery")
+            .slice(0, 3),
           testimonials: [...(data.testimonials || [])].slice(0, 3),
         });
       } catch (err) {
@@ -106,17 +114,23 @@ export default function EditNgoProfile() {
 
       Object.entries(formData).forEach(([key, value]) => {
         if (key === "gallery") {
-          // send new uploaded images
-          value.forEach((img) => {
-            if (img instanceof File) {
-              payload.append("newGallery", img);
-            }
-          });
+        // Upload new files
+        value.forEach((img) => {
+          if (img instanceof File) {
+            payload.append("newGallery", img);
+          }
+        });
 
-          // send remaining existing images (AFTER delete)
-          const existingImages = value.filter((img) => typeof img === "string");
-          payload.append("existingGallery", JSON.stringify(existingImages));
-        } else if (key === "testimonials") {
+        // Send existing gallery URLs (only gallery type)
+        const existingImages = value
+          .filter((img) => !(img instanceof File))
+          .map((img) =>
+            typeof img === "string" ? img : img?.url
+          );
+
+        payload.append("existingGallery", JSON.stringify(existingImages));
+      }
+      else if (key === "testimonials") {
           payload.append("testimonials", JSON.stringify(value));
         } else {
           payload.append(key, value);
@@ -151,7 +165,7 @@ export default function EditNgoProfile() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <p><span className="font-semibold text-green-700">Name:</span> {ngo.name}</p>
           <p><span className="font-semibold text-green-700">Email:</span> {ngo.email}</p>
-          <p><span className="font-semibold text-green-700">NGO Registration No:</span> {ngo.ngoRegistrationNumber}</p>
+          <p><span className="font-semibold text-green-700">NGO Registration No:</span> {ngo.registrationNumber}</p>
           <p><span className="font-semibold text-green-700">CARA Registration No:</span> {ngo.caraRegistrationNumber}</p>
         </div>
 
@@ -174,6 +188,21 @@ export default function EditNgoProfile() {
           <div>
             <label className="font-semibold text-green-700">Contact:</label>
             <input type="text" name="contact" value={formData.contact} onChange={handleChange} className="w-full border p-2 rounded mt-1"/>
+          </div>
+
+          <div>
+            <label className="font-semibold text-green-700">Alternate Contact:</label>
+            <input type="text" name="alternateContact" value={formData.alternateContact} onChange={handleChange} className="w-full border p-2 rounded mt-1"/>
+          </div>
+
+          <div>
+            <label className="font-semibold text-green-700"> Contact Person Name:</label>
+            <input type="text" name="contactPersonName" value={formData.contactPersonName} onChange={handleChange} className="w-full border p-2 rounded mt-1" />
+          </div>
+
+          <div>
+            <label className="font-semibold text-green-700">Contact Person Designation:</label>
+            <input type="text" name="contactPersonDesignation" value={formData.contactPersonDesignation} onChange={handleChange} className="w-full border p-2 rounded mt-1" />
           </div>
 
           <div>
@@ -206,9 +235,15 @@ export default function EditNgoProfile() {
                   {/* Image Preview */}
                   {img ? (
                     <img
-                      src={img instanceof File ? URL.createObjectURL(img) : img}
+                      src={
+                        img instanceof File
+                          ? URL.createObjectURL(img)
+                          : typeof img === "string"
+                          ? img
+                          : img?.url
+                      }
                       alt={`Gallery ${index + 1}`}
-                      className="h-40 w-full object-cover rounded-md border"
+                      className="h-40 w-full object-contain rounded-md border bg-gray-50"
                     />
                   ) : (
                     <div className="h-40 w-full flex items-center justify-center border rounded-md text-gray-400 text-sm">

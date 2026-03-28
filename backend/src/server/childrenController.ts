@@ -143,12 +143,17 @@ export const updateChild = async (req: Request, res: Response) => {
 
     if (age !== undefined) child.age = Number(age);
     if (healthStatus !== undefined) child.healthStatus = healthStatus;
-    if (educationLevel !== undefined) child.educationLevel = educationLevel;
+    if (educationLevel !== undefined)
+      child.educationLevel = educationLevel;
+
+    // ⭐⭐⭐ ADD THIS (Edit request notification)
+    child.hasEditRequest = true;
+    child.editRequestedAt = new Date();
 
     // Append ONLY new medical certificates
     if (req.files && Array.isArray(req.files)) {
       const newImages = (req.files as Express.Multer.File[]).map(
-        file => file.path // Cloudinary URL
+        (file) => file.path
       );
 
       child.gallery.push(...newImages);

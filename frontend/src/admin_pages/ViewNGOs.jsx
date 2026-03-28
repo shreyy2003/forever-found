@@ -51,6 +51,9 @@ function ViewNGOs() {
   const rejectedCount = ngos.filter(
     (n) => n.status === "rejected"
   ).length;
+  const editRequestCount = ngos.filter(
+    (n) => n.hasEditRequest === true
+  ).length;
 
   if (loading) {
     return (
@@ -104,6 +107,7 @@ function ViewNGOs() {
           <StatCard label="Total" value={totalNGOs} color="text-slate-700" />
           <StatCard label="Approved" value={approvedCount} color="text-green-600" />
           <StatCard label="Rejected" value={rejectedCount} color="text-red-600" />
+          <StatCard label="Edit Requests" value={editRequestCount} color="text-yellow-600" />
         </div>
 
         {/* Search + Filter */}
@@ -147,36 +151,54 @@ function ViewNGOs() {
             </tr>
           </thead>
           <tbody>
-            {filteredNGOs.map((ngo) => (
-              <tr key={ngo._id} className="border-t hover:bg-slate-50">
-                <td className="px-6 py-4 font-medium">{ngo.name}</td>
-                <td className="px-6 py-4">{ngo.city}</td>
-                <td className="px-6 py-4 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-teal-600" />
-                  {ngo.numberOfChildren}
-                </td>
-                <td className="px-6 py-4">
-                  <StatusBadge status={ngo.status} />
-                </td>
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() => navigate(`/admin/ngos/${ngo._id}`)}
-                    className="text-teal-600 font-semibold hover:underline"
-                  >
-                    View →
-                  </button>
-                </td>
-              </tr>
-            ))}
+          {filteredNGOs.map((ngo) => (
+            <tr
+              key={ngo._id}
+              className={`border-t hover:bg-slate-50 
+                ${ngo.hasEditRequest ? "bg-yellow-50" : ""}
+              `}
+            >
+              <td className="px-6 py-4 font-medium flex items-center gap-2">
+                {ngo.name}
 
-            {filteredNGOs.length === 0 && (
-              <tr>
-                <td colSpan="5" className="text-center py-8 text-slate-500">
-                  No NGOs found
-                </td>
-              </tr>
-            )}
-          </tbody>
+                {/* Edit Request Badge */}
+                {ngo.hasEditRequest && (
+                  <span className="text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold">
+                    Edit Request
+                  </span>
+                )}
+              </td>
+
+              <td className="px-6 py-4">{ngo.city}</td>
+
+              <td className="px-6 py-4 flex items-center gap-2">
+                <Users className="w-4 h-4 text-teal-600" />
+                {ngo.numberOfChildren}
+              </td>
+
+              <td className="px-6 py-4">
+                <StatusBadge status={ngo.status} />
+              </td>
+
+              <td className="px-6 py-4">
+                <button
+                  onClick={() => navigate(`/admin/ngos/${ngo._id}`)}
+                  className="text-teal-600 font-semibold hover:underline"
+                >
+                  View →
+                </button>
+              </td>
+            </tr>
+          ))}
+
+          {filteredNGOs.length === 0 && (
+            <tr>
+              <td colSpan="5" className="text-center py-8 text-slate-500">
+                No NGOs found
+              </td>
+            </tr>
+          )}
+        </tbody>
         </table>
       </div>
     </div>

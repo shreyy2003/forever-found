@@ -214,38 +214,56 @@ export const getAllNGOs = async (req: Request, res: Response) => {
   }
 };
 
-// Fetch details of one NGO
+//single ngo details
 export const getNGODetails = async (req: Request, res: Response) => {
   try {
     const ngo = await NGO.findById(req.params.id);
-    if (!ngo) return res.status(404).json({ message: "NGO not found" });
+    if (!ngo) {
+      return res.status(404).json({ message: "NGO not found" });
+    }
 
-    // Explicitly return all fields
     res.json({
       id: ngo._id,
       name: ngo.name,
       location: ngo.location,
-      city:ngo.city,
-      state:ngo.state,
+      city: ngo.city,
+      state: ngo.state,
       logo: ngo.logo,
+
       yearOfEstablishment: ngo.yearOfEstablishment,
       website: ngo.website,
+
       contact: ngo.contact,
+      alternateContact: ngo.alternateContact,
+
+      contactPersonName: ngo.contactPersonName,
+      contactPersonDesignation: ngo.contactPersonDesignation,
+
       email: ngo.email,
-      ngoRegistrationNumber: ngo.registrationNumber, // make sure this exists in DB
+
+      registrationNumber: ngo.registrationNumber,
       caraRegistrationNumber: ngo.caraRegistrationNumber,
+
       about: ngo.about,
       numberOfChildren: ngo.numberOfChildren,
-      gallery: ngo.gallery,
+
+      gallery: ngo.gallery?.map((item: any) =>
+        typeof item === "string"
+        ? { type: "gallery", url: item }
+        : item
+      ),
+
       testimonials: ngo.testimonials,
-      socialId: ngo.socialId,
       emailVerified: ngo.emailVerified,
+      status: ngo.status
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch NGO details" });
   }
 };
+
 
 // Validate NGO ID
 export const validateNgoId = async (req: Request, res: Response) => {
@@ -271,6 +289,7 @@ export const validateNgoId = async (req: Request, res: Response) => {
   }
 };
 
+//update profile of ngo
 export const updateNGODetails = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -280,64 +299,84 @@ export const updateNGODetails = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "NGO not found" });
     }
 
-    const {
-      about,
-      website,
-      contact,
-      alternateContact,
-      testimonials,
-      city,
-      state,
-      location,
-      numberOfChildren,
-      existingGallery,
-    } = req.body;
+      const {
+        about,
+        website,
+        contact,
+        alternateContact,
+        testimonials,
+        city,
+        state,
+        location,
+        numberOfChildren,
+        contactPersonName,
+        contactPersonDesignation,
+        existingGallery,
+      } = req.body;
 
-    // ---------- TEXT ----------
-    ngo.about = about ?? ngo.about;
-    ngo.website = website ?? ngo.website;
-    ngo.contact = contact ?? ngo.contact;
-    ngo.alternateContact = alternateContact ?? ngo.alternateContact;
-    ngo.city = city ?? ngo.city;
-    ngo.state = state ?? ngo.state;
-    ngo.location = location ?? ngo.location;
-    ngo.numberOfChildren = numberOfChildren ?? ngo.numberOfChildren;
+      // ---------- TEXT ----------
+      ngo.about = about ?? ngo.about;
+      ngo.website = website ?? ngo.website;
+      ngo.contact = contact ?? ngo.contact;
+      ngo.alternateContact = alternateContact ?? ngo.alternateContact;
+      ngo.city = city ?? ngo.city;
+      ngo.state = state ?? ngo.state;
+      ngo.location = location ?? ngo.location;
+      ngo.numberOfChildren = numberOfChildren ?? ngo.numberOfChildren;
+      ngo.contactPersonName =contactPersonName ?? ngo.contactPersonName;
+      ngo.contactPersonDesignation =contactPersonDesignation ?? ngo.contactPersonDesignation;
 
-    if (testimonials) {
-      ngo.testimonials = JSON.parse(testimonials);
+      if (testimonials) {
+        ngo.testimonials = JSON.parse(testimonials);
+      }
+
+      // ---------- GALLERY ----------
+
+      // 1️⃣ Preserve non-gallery images (registration + cara)
+      const nonGalleryImages = ngo.gallery.filter(
+        (img: any) => img.type !== "gallery"
+      );
+
+      // 2️⃣ Parse existing gallery URLs (these are strings from frontend)
+      let parsedExistingGallery: string[] = [];
+
+      if (existingGallery) {
+        parsedExistingGallery = JSON.parse(existingGallery);
+      }
+
+      // Convert string URLs → object format
+      const existingGalleryObjects = parsedExistingGallery.map((url: string) => ({
+        type: "gallery" as const,
+        url,
+      }));
+
+      // 3️⃣ Add new uploaded images
+      const newGalleryObjects =
+        req.files && Array.isArray(req.files)
+          ? (req.files as Express.Multer.File[]).map((file) => ({
+              type: "gallery" as const,
+              url: file.path,
+            }))
+          : [];
+
+      // 4️⃣ Combine + enforce max 3 gallery images
+      const finalGalleryImages = [
+        ...existingGalleryObjects,
+        ...newGalleryObjects,
+      ].slice(0, 3);
+
+      // 5️⃣ Final gallery = preserved docs + updated gallery images
+      ngo.set("gallery", [...nonGalleryImages, ...finalGalleryImages]);
+
+      // ---------- EDIT REQUEST FLAG ----------
+      if (ngo.status === "approved") {
+        ngo.hasEditRequest = true;
+        ngo.editRequestedAt = new Date();
+      }
+      await ngo.save();
+      res.json(ngo);
+    } catch (error) {
+      console.error("Error updating NGO:", error);
+      res.status(500).json({ message: "Failed to update NGO" });
     }
-
-    // ---------- GALLERY ----------
-    let updatedGallery: { type: "registration" | "cara" | "gallery"; url: string }[] = [];
-
-    // Keep existing images
-    if (existingGallery) {
-      updatedGallery = JSON.parse(existingGallery);
-    }
-
-    // Add new uploads
-    if (req.files && Array.isArray(req.files)) {
-      (req.files as Express.Multer.File[]).forEach((file) => {
-        updatedGallery.push({
-          type: "gallery",
-          url: file.path,
-        });
-      });
-    }
-
-    // Enforce max gallery images (only gallery type)
-    const finalGallery = [
-      ...updatedGallery.filter(img => img.type !== "gallery"),
-      ...updatedGallery.filter(img => img.type === "gallery").slice(0, 3),
-    ];
-
-    // ✅ IMPORTANT FIX
-    ngo.set("gallery", finalGallery);
-
-    await ngo.save();
-    res.json(ngo);
-  } catch (error) {
-    console.error("Error updating NGO:", error);
-    res.status(500).json({ message: "Failed to update NGO" });
-  }
 };

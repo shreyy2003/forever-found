@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { adminFetch } from "../securitymiddlewares/adminFetch";
 
@@ -27,47 +27,36 @@ const NGODetails = () => {
   const [blockReason, setBlockReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchData = useCallback(async () => {
+    try {
+      const [ngoRes, meetingsRes, adoptedRes] = await Promise.all([
+        adminFetch(`/api/admin/ngos/${id}`),
+        adminFetch(`/api/admin/ngos/${id}/meetings`),
+        adminFetch(`/api/admin/ngos/${id}/adopted-children`),
+      ]);
 
-    const fetchData = async () => {
-      try {
-        const [ngoRes, meetingsRes, adoptedRes] = await Promise.all([
-          adminFetch(`/api/admin/ngos/${id}`, { credentials: "include" }),
-          adminFetch(`/api/admin/ngos/${id}/meetings`, { credentials: "include" }),
-          adminFetch(`/api/admin/ngos/${id}/adopted-children`, {
-            credentials: "include",
-          }),
-        ]);
-
-        if (!ngoRes.ok || !meetingsRes.ok || !adoptedRes.ok) {
-          throw new Error();
-        }
-
-        const ngoData = await ngoRes.json();
-        const meetingsData = await meetingsRes.json();
-        const adoptedChildrenData = await adoptedRes.json();
-
-        if (isMounted) {
-          setNgo(ngoData);
-          setMeetings(meetingsData);
-          setAdoptedChildren(adoptedChildrenData);
-        }
-      } catch (err) {
-        console.error("Failed to load NGO data");
-      } finally {
-        if (isMounted) setLoading(false);
+      if (!ngoRes.ok || !meetingsRes.ok || !adoptedRes.ok) {
+        throw new Error();
       }
-    };
 
-    fetchData();
+      const ngoData = await ngoRes.json();
+      const meetingsData = await meetingsRes.json();
+      const adoptedChildrenData = await adoptedRes.json();
 
-    const interval = setInterval(fetchData, 5000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+      setNgo(ngoData);
+      setMeetings(meetingsData);
+      setAdoptedChildren(adoptedChildrenData);
+    } catch {
+      console.error("Failed to load NGO data");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
 
   /* ---------- BLOCK ---------- */
   const handleBlock = async () => {
@@ -122,6 +111,22 @@ const NGODetails = () => {
     }
   };
 
+  /* ---------- CLEAR EDIT REQUEST ---------- */
+  const handleClearEditRequest = async () => {
+    try {
+      const res = await adminFetch(
+        `/api/admin/ngos/${id}/clear-edit-request`,
+        { method: "PATCH" }
+      );
+
+      if (!res.ok) throw new Error();
+
+      await fetchData(); // refresh properly
+    } catch {
+      alert("Failed to clear edit request");
+    }
+  };
+
   if (loading) return <p className="text-center mt-10">Loading...</p>;
   if (!ngo) return <p>NGO not found</p>;
 
@@ -157,6 +162,20 @@ const NGODetails = () => {
           <h2 className="text-2xl font-bold uppercase tracking-wide mb-6">
             NGO Details
           </h2>
+          {ngo.hasEditRequest && (
+            <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-md mb-4">
+              <p className="font-semibold text-yellow-800">
+                ⚠️ This NGO has requested profile changes.
+              </p>
+
+              <button
+                onClick={handleClearEditRequest}
+                className="mt-2 bg-yellow-600 text-white px-4 py-2 rounded"
+              >
+                Mark as Reviewed
+              </button>
+            </div>
+          )}
 
           {/* ADMIN */}
           <Section id="admin" title="Admin Controls" bg="bg-[#dbeaf3]">
@@ -276,6 +295,13 @@ const NGODetails = () => {
             </Grid>
           </Section>
 
+          {/* ABOUT */}
+          <Section id="about" title="About the NGO" bg="bg-[#dbeaf3]">
+            <p className="text-gray-700 whitespace-pre-line">
+              {ngo.about || "—"}
+            </p>
+          </Section>
+
           <Section title="Official Certificates" bg="bg-[#dbeaf3]">
           <div className="grid grid-cols-2 gap-6">
 
@@ -310,32 +336,8 @@ const NGODetails = () => {
                 <p className="text-gray-500 italic">Not uploaded</p>
               )}
             </div>
-
           </div>
         </Section>
-
-          {/* ABOUT */}
-          <Section id="about" title="About the NGO" bg="bg-[#dbeaf3]">
-            <p className="text-gray-700 whitespace-pre-line">
-              {ngo.about || "—"}
-            </p>
-          </Section>
-
-          {/* TESTIMONIALS */}
-          <Section id="testimonials" title="Testimonials" bg="bg-[#f2e8cf]">
-            {ngo.testimonials?.length ? (
-              ngo.testimonials.map((t, i) => (
-                <div key={i} className="border rounded-md p-4 bg-white mb-3">
-                  <p className="italic">“{t.feedback}”</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {t.name} {t.role && `— ${t.role}`}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p>No testimonials available.</p>
-            )}
-          </Section>
 
           {/* Gallery Images */}
           <Section title="NGO Gallery" bg="bg-[#f2f7f4]">
@@ -354,6 +356,24 @@ const NGODetails = () => {
                 <p className="text-gray-500 italic">No gallery images uploaded</p>
               )}
             </Section>
+
+          {/* TESTIMONIALS */}
+          <Section id="testimonials" title="Testimonials" bg="bg-[#f2e8cf]">
+            {ngo.testimonials?.length ? (
+              ngo.testimonials.map((t, i) => (
+                <div key={i} className="border rounded-md p-4 bg-white mb-3">
+                  <p className="italic">“{t.feedback}”</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {t.name} {t.role && `— ${t.role}`}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p>No testimonials available.</p>
+            )}
+          </Section>
+
+          
 
           {/* MEETINGS */}
           <Section id="meetings" title="Meetings History" bg="bg-[#fffdfc]">

@@ -168,6 +168,13 @@ function Ngo_Approval_Details() {
           </Grid>
         </Section>
 
+        {/* ABOUT */}
+        <Section title="About the NGO" bg="bg-[#dbeaf3]">
+          <p className="text-gray-700 whitespace-pre-line">
+            {ngo.about || "—"}
+          </p>
+        </Section>
+
 
         <Section title="Official Certificates" bg="bg-[#dbeaf3]">
           <div className="grid grid-cols-2 gap-6">
@@ -207,13 +214,26 @@ function Ngo_Approval_Details() {
           </div>
         </Section>
 
+        {/* Gallery Images */}
+        <Section title="NGO Gallery" bg="bg-[#f2f7f4]">
+            {galleryImages && galleryImages.length > 0 ? (
+              <div className="grid grid-cols-3 gap-4">
+                {galleryImages.map((img, index) => (
+                  <img
+                    key={index}
+                    src={img.url}
+                    alt={`Gallery ${index + 1}`}
+                    className="border rounded-md h-40 object-cover"
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 italic">No gallery images uploaded</p>
+            )}
+          </Section>
 
-        {/* ABOUT */}
-        <Section title="About the NGO" bg="bg-[#dbeaf3]">
-          <p className="text-gray-700 whitespace-pre-line">
-            {ngo.about || "—"}
-          </p>
-        </Section>
+
+        
         
         {/* Testimonials */}
         <Section title="Testimonials">
@@ -236,23 +256,7 @@ function Ngo_Approval_Details() {
         )}
         </Section>
 
-        {/* Gallery Images */}
-        <Section title="NGO Gallery" bg="bg-[#f2f7f4]">
-            {galleryImages && galleryImages.length > 0 ? (
-              <div className="grid grid-cols-3 gap-4">
-                {galleryImages.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img.url}
-                    alt={`Gallery ${index + 1}`}
-                    className="border rounded-md h-40 object-cover"
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 italic">No gallery images uploaded</p>
-            )}
-          </Section>
+        
 
 
 

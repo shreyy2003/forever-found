@@ -70,6 +70,25 @@ export const getPendingAdopters = async (req: Request, res: Response) => {
   }
 };
 
+// GET: Count of pending adopters (approval badge)
+export const getPendingAdopterCount = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const count = await Adopter.countDocuments({
+      status: "pending",
+    });
+
+    res.status(200).json({ count });
+  } catch (error) {
+    console.error("Error fetching pending adopter count:", error);
+    res.status(500).json({
+      message: "Failed to fetch pending adopter count",
+    });
+  }
+};
+
 //approve adopter
 export const approveAdopter = async (req: Request, res: Response) => {
   try {
@@ -141,6 +160,25 @@ export const getPendingNGOs = async (req: Request, res: Response) => {
   }
 };
 
+// GET: Count of pending NGOs (approval badge)
+export const getPendingNgoCount = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const count = await NGO.countDocuments({
+      status: "pending",
+    });
+
+    res.status(200).json({ count });
+  } catch (error) {
+    console.error("Error fetching pending NGO count:", error);
+    res.status(500).json({
+      message: "Failed to fetch pending NGO count",
+    });
+  }
+};
+
 // approve NGO
 export const approveNgo = async (req: Request, res: Response) => {
   try {
@@ -192,7 +230,7 @@ export const rejectNgo = async (req: Request, res: Response) => {
 
 
 
-// Fetch only approved + rejected NGOs
+// Fetch approved + rejected NGOs
 export const getApprovedNGOsForAdmin = async (
   req: Request,
   res: Response
@@ -201,7 +239,12 @@ export const getApprovedNGOsForAdmin = async (
     const ngos = await NGO.find({
       status: { $in: ["approved", "rejected"] }
     })
-      .select("name city numberOfChildren status canEdit")
+      .sort({
+        hasEditRequest: -1,
+        editRequestedAt: -1,
+        createdAt: -1,
+      })
+      .select("name city numberOfChildren status canEdit hasEditRequest editRequestedAt")
       .lean();
 
     const formattedNGOs = ngos.map((ngo: any) => ({
@@ -211,6 +254,7 @@ export const getApprovedNGOsForAdmin = async (
       numberOfChildren: ngo.numberOfChildren,
       status: ngo.status,
       canEdit: ngo.canEdit,
+      hasEditRequest: ngo.hasEditRequest, 
     }));
 
     res.status(200).json({
@@ -224,6 +268,60 @@ export const getApprovedNGOsForAdmin = async (
     });
   }
 };
+
+
+// GET: Count of NGO edit profile requests
+export const getNgoEditRequestCount = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const count = await NGO.countDocuments({
+      status: "approved",
+      hasEditRequest: true,
+    });
+
+    res.status(200).json({ count });
+  } catch (error) {
+    console.error("Error fetching NGO edit request count:", error);
+    res.status(500).json({
+      message: "Failed to fetch NGO edit request count",
+    });
+  }
+};
+
+// CLEAR NGO EDIT REQUEST
+export const clearNgoEditRequest = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const ngo = await NGO.findByIdAndUpdate(
+      req.params.id,
+      {
+        hasEditRequest: false,
+        editRequestedAt: null, // optional but recommended
+      },
+      { new: true }
+    );
+
+    if (!ngo) {
+      return res.status(404).json({ message: "NGO not found" });
+    }
+
+    res.status(200).json({
+      message: "NGO edit request cleared",
+      ngo,
+    });
+  } catch (error) {
+    console.error("Error clearing NGO edit request:", error);
+    res.status(500).json({
+      message: "Failed to clear NGO edit request",
+    });
+  }
+};
+
+
 
 // Get single NGO
 export const getNGODetails = async (req: Request, res: Response) => {
@@ -358,9 +456,10 @@ export const getAllChildrenForAdmin = async (
 ) => {
   try {
     const children = await Child.find()
-      .populate("ngoId", "name") // only NGO name
+      .sort({ createdAt: -1 }) 
+      .populate("ngoId", "name")
       .select(
-        "name age gender adoptionStatus canEdit ngoId"
+        "name age gender adoptionStatus canEdit ngoId createdAt hasEditRequest editRequestedAt"
       )
       .lean();
 
@@ -372,6 +471,9 @@ export const getAllChildrenForAdmin = async (
       adoptionStatus: child.adoptionStatus,
       canEdit: child.canEdit,
       ngoName: child.ngoId?.name || "N/A",
+      createdAt: child.createdAt,
+      hasEditRequest: child.hasEditRequest,
+      editRequestedAt: child.editRequestedAt,
     }));
 
     res.status(200).json({
@@ -382,6 +484,25 @@ export const getAllChildrenForAdmin = async (
     console.error("Error fetching children for admin:", error);
     res.status(500).json({
       message: "Failed to fetch children",
+    });
+  }
+};
+
+// GET: count of child edit requests
+export const getChildEditRequestCount = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const count = await Child.countDocuments({
+      hasEditRequest: true,
+    });
+
+    res.status(200).json({ count });
+  } catch (error) {
+    console.error("Error fetching child edit count:", error);
+    res.status(500).json({
+      message: "Failed to fetch child edit count",
     });
   }
 };

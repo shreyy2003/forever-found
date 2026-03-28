@@ -9,7 +9,7 @@ const run = async () => {
     console.log("✅ Connected to MongoDB");
 
     const res = await mongoose.connection
-      .collection("adopters")
+      .collection("children")   // ⭐ children collection
       .updateMany(
         {},
         {
@@ -20,11 +20,11 @@ const run = async () => {
         }
       );
 
-    console.log("Adopters matched:", res.matchedCount);
-    console.log("Adopters modified:", res.modifiedCount);
+    console.log("Children matched:", res.matchedCount);
+    console.log("Children modified:", res.modifiedCount);
 
     await mongoose.disconnect();
-    console.log("✅ Edit request fields added to all adopters");
+    console.log("✅ Edit request fields added to all children");
   } catch (err) {
     console.error("❌ Migration failed:", err);
     process.exit(1);

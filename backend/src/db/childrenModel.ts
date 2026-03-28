@@ -21,6 +21,15 @@ const childSchema = new mongoose.Schema({
     blockedAt: {
       type: Date,
     },
+    hasEditRequest: {
+      type: Boolean,
+      default: false,
+    },
+
+    editRequestedAt: {
+      type: Date,
+      default: null,
+    },
 },{ timestamps: true }
 );
 

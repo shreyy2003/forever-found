@@ -94,6 +94,17 @@ const ngoSchema = new mongoose.Schema(
       default: null,
     },
 
+    //Edit Request Control
+    hasEditRequest: {
+      type: Boolean,
+      default: false,
+    },
+
+    editRequestedAt: {
+      type: Date,
+      default: null,
+    },
+
     // --- Session tokens ---
     sessions: [
       {
