@@ -38,7 +38,8 @@ function ViewNGOs() {
 
     const matchesFilter =
       filter === "ALL" ||
-      ngo.status.toUpperCase() === filter;
+      ngo.status.toUpperCase() === filter ||
+      (filter === "BLOCKED" && ngo.canEdit === false);;
 
     return matchesSearch && matchesFilter;
   });
@@ -51,9 +52,9 @@ function ViewNGOs() {
   const rejectedCount = ngos.filter(
     (n) => n.status === "rejected"
   ).length;
-  const editRequestCount = ngos.filter(
-    (n) => n.hasEditRequest === true
-  ).length;
+  const blockedCount = ngos.filter(
+  (n) => n.canEdit === false
+).length;
 
   if (loading) {
     return (
@@ -107,7 +108,7 @@ function ViewNGOs() {
           <StatCard label="Total" value={totalNGOs} color="text-slate-700" />
           <StatCard label="Approved" value={approvedCount} color="text-green-600" />
           <StatCard label="Rejected" value={rejectedCount} color="text-red-600" />
-          <StatCard label="Edit Requests" value={editRequestCount} color="text-yellow-600" />
+          <StatCard label="Blocked NGOs" value={blockedCount} color="text-yellow-600" />
         </div>
 
         {/* Search + Filter */}
@@ -134,6 +135,7 @@ function ViewNGOs() {
             <option value="ALL">All</option>
             <option value="APPROVED">Approved</option>
             <option value="REJECTED">Rejected</option>
+            <option value="BLOCKED">Blocked</option>
           </select>
         </div>
       </div>
@@ -155,6 +157,7 @@ function ViewNGOs() {
             <tr
               key={ngo._id}
               className={`border-t hover:bg-slate-50 
+                ${ngo.canEdit === false ? "bg-red-50" : ""}
                 ${ngo.hasEditRequest ? "bg-yellow-50" : ""}
               `}
             >
@@ -165,6 +168,11 @@ function ViewNGOs() {
                 {ngo.hasEditRequest && (
                   <span className="text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold">
                     Edit Request
+                  </span>
+                )}
+                {ngo.canEdit === false && (
+                  <span className="text-xs bg-red-600 text-white px-2 py-1 rounded-full font-semibold">
+                    Blocked
                   </span>
                 )}
               </td>

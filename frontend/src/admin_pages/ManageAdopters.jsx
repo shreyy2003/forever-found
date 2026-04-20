@@ -43,8 +43,8 @@ function ManageAdopters() {
 
     const matchesFilter =
       filter === "ALL" ||
-      adopter.status.toUpperCase() === filter;
-
+      adopter.status.toUpperCase() === filter ||
+      (filter === "BLOCKED" && adopter.isBlocked === true);
     return matchesSearch && matchesFilter;
   });
 
@@ -56,8 +56,8 @@ function ManageAdopters() {
   const rejectedCount = adopters.filter(
     (a) => a.status === "rejected"
   ).length;
-  const editRequestCount = adopters.filter(
-    (a) => a.hasEditRequest
+  const blockedCount = adopters.filter(
+    (n) => n.isBlocked === true
   ).length;
 
 
@@ -103,7 +103,7 @@ function ManageAdopters() {
             <StatCard label="Total" value={totalAdopters} color="text-slate-700" />
             <StatCard label="Approved" value={approvedCount} color="text-green-600" />
             <StatCard label="Rejected" value={rejectedCount} color="text-red-600" />
-            <StatCard label="Edit Requests" value={editRequestCount} color="text-yellow-600" />
+            <StatCard label="Blocked Adopters" value={blockedCount} color="text-yellow-600" />
           </div>
 
           {/* Search + Filter */}
@@ -129,6 +129,7 @@ function ManageAdopters() {
               <option value="ALL">All</option>
               <option value="APPROVED">Approved</option>
               <option value="REJECTED">Rejected</option>
+              <option value="BLOCKED">Blocked</option>
             </select>
           </div>
         </div>
@@ -150,13 +151,18 @@ function ManageAdopters() {
               {filteredAdopters.map((adopter) => (
                 <tr key={adopter._id} className={`border-t transition ${adopter.hasEditRequest
                   ? "bg-yellow-50 border-l-4 border-yellow-500"
-                  : "hover:bg-slate-50" }`}>
+                  : "hover:bg-slate-50" } ${adopter.isBlocked === true ? "bg-red-50" : ""}`}>
 
                   <td className="px-6 py-4 font-medium text-slate-700 flex items-center gap-2">
                     {adopter.fullName}
                     {adopter.hasEditRequest && (
                       <span className="text-xs px-2 py-1 rounded-full bg-yellow-200 text-yellow-800 font-semibold">
                         Edit Request
+                      </span>
+                    )}
+                    {adopter.isBlocked === true && (
+                      <span className="text-xs bg-red-600 text-white px-2 py-1 rounded-full font-semibold">
+                        Blocked
                       </span>
                     )}
                   </td>

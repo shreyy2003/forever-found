@@ -600,6 +600,32 @@ export const unblockChild = async (req: Request, res: Response) => {
   }
 };
 
+//handling edit request
+export const reviewChildEdit = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const child = await Child.findById(id);
+
+    if (!child) {
+      return res.status(404).json({ message: "Child not found" });
+    }
+
+    child.hasEditRequest = false;
+    child.editRequestedAt = null;
+
+    await child.save();
+
+    const updatedChild = await Child.findById(id)
+      .populate("ngoId", "name")
+      .populate("adopterId", "fullName");
+
+    res.json(updatedChild);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to review edit request" });
+  }
+};
+
 
 
 
@@ -609,7 +635,7 @@ export const getAllAdopters = async (req: Request, res: Response) => {
   try {
     const adopters = await Adopter.find(
       { status: { $in: ["approved", "rejected"] } },
-      "fullName gender occupation contactNumber status hasEditRequest"
+      "fullName gender occupation contactNumber status hasEditRequest isBlocked"
     )
       .sort({ hasEditRequest: -1, createdAt: -1 });
 

@@ -52,7 +52,9 @@ function ManageChildren() {
         filter === "ALL" ||
         (filter === "AVAILABLE" && child.adoptionStatus === "Available") ||
         (filter === "ADOPTED" && child.adoptionStatus === "Adopted") ||
-        (filter === "BLOCKED" && child.canEdit === false);
+        (filter === "BLOCKED" && child.canEdit === false) ||
+        (filter === "EDITED" && isEditedChild(child)) ||
+        (filter === "NEW" && isNewChild(child.createdAt));
 
       return matchesSearch && matchesFilter;
     })
@@ -146,6 +148,8 @@ function ManageChildren() {
                          focus:ring-2 focus:ring-teal-500"
             >
               <option value="ALL">All</option>
+              <option value="EDITED">Edited</option>
+              <option value="NEW">New Today</option>
               <option value="AVAILABLE">Available</option>
               <option value="ADOPTED">Adopted</option>
               <option value="BLOCKED">Blocked</option>
@@ -169,29 +173,37 @@ function ManageChildren() {
               {filteredChildren.map((child) => (
                 <tr
                   key={child._id}
-                  className={`border-t hover:bg-slate-50 transition
+                  className={`border-t transition hover:bg-slate-50
+                    ${child.canEdit === false ? "bg-red-50" : ""}
                     ${
                       isEditedChild(child)
-                        ? "bg-orange-50 border-l-4 border-orange-500"
+                        ? "border-l-4 border-orange-500"
                         : isNewChild(child.createdAt)
-                        ? "bg-yellow-50 border-l-4 border-yellow-400"
+                        ? "border-l-4 border-yellow-400"
                         : ""
                     }
                   `}
                 >
-                  <td className="px-6 py-4 font-medium">
+                  <td className="px-6 py-4 font-medium flex items-center gap-2">
+
                     {child.name}
 
+                    {child.canEdit === false && (
+                      <span className="text-xs bg-red-600 text-white px-2 py-1 rounded-full font-semibold">
+                        Blocked
+                      </span>
+                    )}
+
                     {isEditedChild(child) && (
-                      <span className="ml-2 text-xs bg-orange-600 text-white px-2 py-1 rounded-full">
-                        EDITED
+                      <span className="text-xs bg-orange-600 text-white px-2 py-1 rounded-full font-semibold">
+                        Edited
                       </span>
                     )}
 
                     {!isEditedChild(child) &&
                       isNewChild(child.createdAt) && (
-                        <span className="ml-2 text-xs bg-yellow-500 text-white px-2 py-1 rounded-full">
-                          NEW
+                        <span className="text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold">
+                          New
                         </span>
                       )}
                   </td>
@@ -201,15 +213,17 @@ function ManageChildren() {
                   <td className="px-6 py-4">{child.ngoName}</td>
 
                   <td className="px-6 py-4">
-                    {child.canEdit === false ? (
-                      <span className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-700">
-                        Blocked
-                      </span>
-                    ) : (
-                      <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700">
-                        {child.adoptionStatus}
-                      </span>
-                    )}
+                    <span
+                      className={`text-xs px-3 py-1 rounded-full font-semibold
+                        ${
+                          child.adoptionStatus === "Available"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-blue-100 text-blue-700"
+                        }
+                      `}
+                    >
+                      {child.adoptionStatus}
+                    </span>
                   </td>
 
                   <td className="px-6 py-4">

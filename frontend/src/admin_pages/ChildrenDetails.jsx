@@ -9,7 +9,7 @@ function ChildrenDetails() {
   const [child, setChild] = useState(null);
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [reviewLoading, setReviewLoading] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -118,6 +118,30 @@ function ChildrenDetails() {
     }
   };
 
+  //edit review
+  const handleMarkReviewed = async () => {
+  setReviewLoading(true);
+
+  try {
+    const res = await adminFetch(
+      `/api/admin/children/${id}/review-edit`,
+      {
+        method: "PATCH",
+        credentials: "include",
+      }
+    );
+
+    if (!res.ok) throw new Error();
+
+    const updated = await res.json();
+    setChild(updated);
+  } catch {
+    alert("Failed to mark as reviewed");
+  } finally {
+    setReviewLoading(false);
+  }
+};
+
   return (
     <div className="min-h-screen bg-slate-100 font-serif p-8">
 
@@ -156,48 +180,71 @@ function ChildrenDetails() {
     Admin Controls
   </h2>
 
-  <div className="flex items-start justify-between gap-6">
-  {/* LEFT */}
-  <div className="flex-1">
-    {!child.canEdit ? (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-        <p className="text-xs font-semibold text-red-700 mb-1">
-          Block Reason
-        </p>
-        <p className="text-sm text-red-600">
-          {child.blockReason || "No reason provided"}
-        </p>
-      </div>
-    ) : (
-      <textarea
-        className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-300 focus:outline-none"
-        rows={2}
-        placeholder="Reason for blocking this child..."
-        value={blockReason}
-        onChange={(e) => setBlockReason(e.target.value)}
-      />
-    )}
-  </div>
+ <div className="flex flex-col gap-4">
 
-  {/* RIGHT */}
-  <div className="flex items-center">
-    {!child.canEdit ? (
+  {/* REVIEW SECTION */}
+  {child.hasEditRequest && (
+    <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+      <p className="text-sm text-blue-700 font-medium">
+        Have you reviewed the latest child profile edits?
+      </p>
+
       <button
-        onClick={handleUnblockChild}
-        disabled={actionLoading}
-        className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+        onClick={handleMarkReviewed}
+        disabled={reviewLoading}
+        className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
       >
-        Unblock
+        Mark As Reviewed
       </button>
-    ) : (
-      <button
-        onClick={handleBlockChild}
-        disabled={actionLoading || !blockReason.trim()}
-        className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50"
-      >
-        Block
-      </button>
-    )}
+    </div>
+  )}
+
+  {/* BLOCK SECTION */}
+  <div className="flex items-start justify-between gap-6">
+
+    {/* LEFT SIDE */}
+    <div className="flex-1">
+      {!child.canEdit ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <p className="text-xs font-semibold text-red-700 mb-1">
+            Block Reason
+          </p>
+          <p className="text-sm text-red-600">
+            {child.blockReason || "No reason provided"}
+          </p>
+        </div>
+      ) : (
+        <textarea
+          className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-300 focus:outline-none"
+          rows={2}
+          placeholder="Reason for blocking this child..."
+          value={blockReason}
+          onChange={(e) => setBlockReason(e.target.value)}
+        />
+      )}
+    </div>
+
+    {/* RIGHT SIDE BUTTON */}
+    <div className="flex items-center">
+      {!child.canEdit ? (
+        <button
+          onClick={handleUnblockChild}
+          disabled={actionLoading}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+        >
+          Unblock
+        </button>
+      ) : (
+        <button
+          onClick={handleBlockChild}
+          disabled={actionLoading || !blockReason.trim()}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50"
+        >
+          Block
+        </button>
+      )}
+    </div>
+
   </div>
 </div>
 

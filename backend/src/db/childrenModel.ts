@@ -29,6 +29,7 @@ const childSchema = new mongoose.Schema({
     editRequestedAt: {
       type: Date,
       default: null,
+      required: false,
     },
 },{ timestamps: true }
 );
