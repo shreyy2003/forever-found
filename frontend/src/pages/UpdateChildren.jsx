@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect} from "react";
+import { useNavigate } from "react-router-dom";
 import SubmitStatus from "../components/Common_Components/SubmitStatus";
 
 function UpdateChildren({ child, onClose, onUpdate }) {
@@ -16,6 +17,7 @@ function UpdateChildren({ child, onClose, onUpdate }) {
   });
 
   const [loading, setLoading] = useState(true);
+  const navigate=useNavigate();
 
   const [submitStatus, setSubmitStatus] = useState({
     show: false,
@@ -61,7 +63,7 @@ function UpdateChildren({ child, onClose, onUpdate }) {
       formDataToSend.append("healthStatus", formData.healthStatus);
       formDataToSend.append("educationLevel", formData.educationLevel);
 
-      // ✅ append ONLY new files
+      // append ONLY new files
       formData.gallery.forEach((item) => {
         if (item instanceof File) {
           formDataToSend.append("gallery", item);
@@ -108,9 +110,22 @@ function UpdateChildren({ child, onClose, onUpdate }) {
 
   return (
     <div className="max-w-full p-6 bg-gradient-to-br from-yellow-50 via-orange-100 to-red-50 rounded-2xl shadow-lg relative font-serif overflow-y-auto max-h-[85vh]">
-      <h2 className="text-3xl font-bold text-orange-700 mb-6 text-center uppercase">
-        Update Child Details
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-bold text-orange-700 uppercase">
+          Update Child Details
+        </h2>
+
+        {child.adoptionStatus === "Available" && (
+          <button
+            onClick={() =>
+              navigate(`/ngo-home/${child.ngoId}/adoption-request/${child._id}`)
+            }
+            className="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-700"
+          >
+            Mark as Adopted
+          </button>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Read Only Info */}

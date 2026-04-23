@@ -6,6 +6,7 @@ function ViewChildren() {
   const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingChild, setEditingChild] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const navigate=useNavigate();
   // Fetch children on mount
@@ -46,15 +47,53 @@ function ViewChildren() {
     navigate(`/ngo-home/${ngoData.id}`);
   };
 
+  const filteredChildren =
+  statusFilter === "All"
+    ? children
+    : children.filter(
+        (child) => child.adoptionStatus === statusFilter
+      );
+
   return (
     <div className="max-w-full font-serif p-9 bg-gradient-to-br from-yellow-50 via-orange-100 to-red-50 rounded-2xl shadow-lg relative max-h-screen overflow-y-auto">
-      <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold text-orange-700 mb-6 ml-4 text-center uppercase">
-        REGISTERED CHILDREN
-      </h2>
-      <button onClick={handleClick} className="bg-amber-600 border border-amber-600 rounded-md p-2 mb-6 font-semibold hover:bg-amber-700 hover:shadow-lg hover:scale-105">Home</button>
-      </div>
+      <div className="flex items-center justify-between mb-6">
 
+  {/* Title */}
+  <h2 className="text-3xl font-bold text-orange-700 uppercase">
+    REGISTERED CHILDREN
+  </h2>
+
+  {/* Right Section */}
+  <div className="flex items-center gap-6">
+
+    {/* Adoption Status Filter */}
+    <div className="flex items-center gap-2">
+      <label className="font-semibold text-orange-700 whitespace-nowrap">
+        Adoption Status:
+      </label>
+
+      <select
+        value={statusFilter}
+        onChange={(e) => setStatusFilter(e.target.value)}
+        className="border border-orange-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+      >
+        <option value="All">All</option>
+        <option value="Available">Available</option>
+        <option value="Adoption Requested">Adoption Requested</option>
+        <option value="Adopted">Adopted</option>
+      </select>
+    </div>
+
+    {/* Home Button */}
+    <button
+      onClick={handleClick}
+      className="bg-amber-600 border border-amber-600 rounded-md px-5 py-2 font-semibold hover:bg-amber-700 hover:shadow-lg transition"
+    >
+      Home
+    </button>
+
+  </div>
+</div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border rounded-xl shadow-md">
@@ -73,7 +112,7 @@ function ViewChildren() {
           </thead>
 
           <tbody>
-            {children.map((child) => (
+            {filteredChildren.map((child) => (
               <tr
                 key={child._id}
                 className="text-center hover:bg-orange-50 transition-colors"
@@ -92,10 +131,21 @@ function ViewChildren() {
                 <td className="py-2 px-4 border">{child.adoptionStatus}</td>
                 <td className="py-2 px-4 border">
                   <button
-                    onClick={() => setEditingChild(child)}
-                    className="text-white bg-blue-600 border rounded-xl px-4 py-1 hover:bg-blue-800 hover:scale-105 transition"
+                    onClick={() => {
+                      if (child.adoptionStatus === "Adopted") {
+                        navigate(`/ngo-home/${ngoData.id}/child-details/${child._id}`);
+                      } else {
+                        setEditingChild(child);
+                      }
+                    }}
+                    className={`text-white rounded-xl px-4 py-1 transition
+                    ${
+                      child.adoptionStatus === "Adopted"
+                        ? "bg-amber-900 hover:bg-amber-700"
+                        : "bg-blue-800 hover:bg-blue-600"
+                    }`}
                   >
-                    Edit
+                    {child.adoptionStatus === "Adopted" ? "View" : "Edit"}
                   </button>
                 </td>
               </tr>
@@ -106,8 +156,14 @@ function ViewChildren() {
 
       {/* Edit Modal */}
       {editingChild && (
-        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 p-4">
-          <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 p-4"
+          onClick={() => setEditingChild(null)}   // close when clicking outside
+        >
+          <div
+            className="w-full max-w-6xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}  // prevent close when clicking inside
+          >
             <UpdateChildren
               child={editingChild}
               onClose={() => setEditingChild(null)}

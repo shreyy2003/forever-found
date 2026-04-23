@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import NGO from "../db/ngoModel";
+import Child from "../db/childrenModel";
+import AdoptionRequest from "../db/AdoptionRequestModel";
 import crypto from "crypto";
 import { sendVerificationEmail } from "../sendEmail";
 
@@ -379,4 +381,175 @@ export const updateNGODetails = async (req: Request, res: Response) => {
       console.error("Error updating NGO:", error);
       res.status(500).json({ message: "Failed to update NGO" });
     }
+};
+
+//adoption request for a child
+export const submitAdoptionRequest = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { childId, adopterType, adopterId, externalAdopter } = req.body;
+
+    if (!childId || !adopterType) {
+      return res.status(400).json({
+        message: "Missing required fields",
+      });
+    }
+
+    const child = await Child.findById(childId);
+
+    if (!child) {
+      return res.status(404).json({
+        message: "Child not found",
+      });
+    }
+
+    // Prevent duplicate request
+    const existingRequest = await AdoptionRequest.findOne({
+      childId,
+      status: "Pending",
+    });
+
+    if (existingRequest) {
+      return res.status(400).json({
+        message: "Adoption request already exists",
+      });
+    }
+
+    if (adopterType === "Platform" && !adopterId) {
+      return res.status(400).json({
+        message: "Platform adopter required",
+      });
+    }
+
+    let parsedExternalAdopter;
+
+    if (adopterType === "External") {
+      try {
+        parsedExternalAdopter = JSON.parse(externalAdopter);
+      } catch {
+        return res.status(400).json({
+          message: "Invalid external adopter data",
+        });
+      }
+    }
+
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
+    const adoptionCertificate =
+      files?.adoptionCertificate?.[0]?.path;
+    const updatedBirthCertificate =
+      files?.updatedBirthCertificate?.[0]?.path;
+    const followUpUndertaking =
+      files?.followUpUndertaking?.[0]?.path;
+
+    if (
+      !adoptionCertificate ||
+      !updatedBirthCertificate ||
+      !followUpUndertaking
+    ) {
+      return res.status(400).json({
+        message: "All legal documents required",
+      });
+    }
+
+    const request = await AdoptionRequest.create({
+      childId,
+      ngoId: child.ngoId,
+      adopterType,
+      adopterId:
+        adopterType === "Platform" ? adopterId : null,
+      externalAdopter:
+        adopterType === "External"
+          ? parsedExternalAdopter
+          : undefined,
+      proofDocuments: {
+        adoptionCertificate,
+        updatedBirthCertificate,
+        followUpUndertaking,
+      },
+      status: "Pending",
+    });
+
+    child.adoptionStatus = "Adoption Requested";
+    await child.save();
+
+    res.status(201).json({
+      message: "Adoption request submitted",
+      request,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to submit adoption request",
+    });
+  }
+};
+
+// GET NGO adoption requests
+export const getNGOAdoptionRequests = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { ngoId } = req.params;
+
+    const requests = await AdoptionRequest.find({ ngoId })
+
+      // Child info needed for display card
+      .populate("childId", "name age gender")
+
+      // Platform adopter info
+      .populate("adopterId", "fullName email contact")
+
+      // newest first
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(requests);
+
+  } catch (error) {
+    console.error("Fetch adoption requests error:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch requests",
+    });
+  }
+};
+
+//each adoption details
+export const getAdoptionRequestById = async (req: Request, res: Response) => {
+  try {
+    const { requestId } = req.params;
+
+    const request = await AdoptionRequest.findById(requestId)
+      .populate("childId", "name age gender")
+      .populate("adopterId", "fullName email contactNumber");
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    res.status(200).json({
+      _id: request._id,
+      status: request.status,
+      adopterType: request.adopterType,
+      createdAt: request.createdAt,
+
+      childId: request.childId,
+      adopterId: request.adopterId,
+      externalAdopter: request.externalAdopter,
+
+      proofDocuments: request.proofDocuments,
+
+      adminRemarks: request.adminRemarks,
+      verifiedAt: request.verifiedAt,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch request" });
+  }
 };

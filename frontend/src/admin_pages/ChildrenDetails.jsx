@@ -270,7 +270,7 @@ function ChildrenDetails() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Info label="Status" value={child.adoptionStatus} />
           <Info label="NGO" value={child.ngoId?.name || "N/A"} />
-          <Info label="Adopter" value={child.adopterId?.fullName || "N/A"} />
+          <Info label="Adopter" value={child.adopterId?.fullName || child.externalAdopterName || "N/A"} />
           <Info label="Editable" value={child.canEdit ? "Yes" : "Blocked"} />
         </div>
       </section>

@@ -8,6 +8,7 @@ import {
   Users,
   Baby,
   ListChecks,
+  ClipboardListIcon
 } from "lucide-react";
 
 function Admin_Dashboard() {
@@ -18,6 +19,7 @@ function Admin_Dashboard() {
   const [editRequestCount, setEditRequestCount] = useState(0);
   const [ngoEditRequestCount, setNgoEditRequestCount] = useState(0);
   const [childEditCount, setChildEditCount] = useState(0);
+  const [adoptionRequestCount, setAdoptionRequestCount] = useState(0);
 
   const options = [
     {
@@ -45,6 +47,11 @@ function Admin_Dashboard() {
       Icon: Baby,
       path: "/admin/manage-children",
     },
+    {
+      label: "Adoption Requests",
+      Icon: ClipboardListIcon,
+      path: "/admin/adoption-requests",
+    },
   ];
 
   useEffect(() => {
@@ -56,12 +63,14 @@ function Admin_Dashboard() {
           adopterRes,
           ngoRes,
           childRes,
+          adoptionReqRes,
         ] = await Promise.all([
           adminFetch("http://localhost:5000/api/admin/adopters/pending/count"),
           adminFetch("http://localhost:5000/api/admin/ngos/pending/count"),
           adminFetch("http://localhost:5000/api/admin/adopters/edit-requests/count"),
           adminFetch("http://localhost:5000/api/admin/ngos/edit-requests/count"),
           adminFetch("http://localhost:5000/api/admin/children/edit-requests/count"),
+          adminFetch("http://localhost:5000/api/admin/adoption-requests/count"),
         ]);
 
         const pendingAdopterData = await pendingAdopterRes.json();
@@ -69,12 +78,14 @@ function Admin_Dashboard() {
         const adopterData = await adopterRes.json();
         const ngoData = await ngoRes.json();
         const childData = await childRes.json();
+        const adoptionReqData = await adoptionReqRes.json();
 
         setPendingAdopterCount(pendingAdopterData.count || 0);
         setPendingNgoCount(pendingNgoData.count || 0);
         setEditRequestCount(adopterData.count || 0);
         setNgoEditRequestCount(ngoData.count || 0);
         setChildEditCount(childData.count || 0);
+        setAdoptionRequestCount(adoptionReqData.count || 0);
 
       } catch (error) {
         console.error("Failed to fetch dashboard counts:", error);
@@ -100,6 +111,7 @@ function Admin_Dashboard() {
             const isManageAdopters = label === "Manage Adopters";
             const isViewNgos = label === "View NGOs";
             const isManageChildren = label === "Manage Children";
+            const isAdoptionRequests = label === "Adoption Requests";
 
             return (
               <button
@@ -132,10 +144,16 @@ function Admin_Dashboard() {
                     {ngoEditRequestCount}
                   </span>
                 )}
-
+                {/*Manage Children Badge Count*/}
                 {isManageChildren && childEditCount > 0 && (
                   <span className="absolute top-3 right-3 bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full">
                     {childEditCount}
+                  </span>
+                )}
+                {/*Adoption Request Badge Count*/}
+                {isAdoptionRequests && adoptionRequestCount > 0 && (
+                  <span className="absolute top-3 right-3 bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    {adoptionRequestCount}
                   </span>
                 )}
 

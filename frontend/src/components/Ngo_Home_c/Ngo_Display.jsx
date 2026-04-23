@@ -4,6 +4,7 @@ import {
   EditIcon,
   ClockIcon,
   ListChecksIcon,
+  FileCheck
 } from "lucide-react";
 
 function Ngo_Display() {
@@ -27,6 +28,7 @@ function Ngo_Display() {
     { label: "Manage Children", Icon: EditIcon, path: ngoId ? `/ngo-home/${ngoId}/view-children` : "#" },
     { label: "Pending Requests", Icon: ListChecksIcon, path: ngoId ? `/ngo-home/${ngoId}/pending-requests` : "#" },
     { label: "Meetings/Status", Icon: ClockIcon, path: ngoId ? `/ngo-home/${ngoId}/meeting-status` : "#" },
+    { label: "Adoption History", Icon: FileCheck, path: ngoId ? `/ngo-home/${ngoId}/adoptions` : "#" },
   ];
 
   // If no NGO is logged in → show a message instead of breaking

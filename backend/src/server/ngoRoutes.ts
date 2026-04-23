@@ -2,6 +2,7 @@ import express from "express";
 import cloudUpload from "../cloudUpload";
 import { registerNGO,verifyNGOEmail } from "./ngoController";
 import { getAllNGOs, getNGODetails, validateNgoId, loginNGO,updateNGODetails } from "./ngoController";
+import { submitAdoptionRequest, getNGOAdoptionRequests, getAdoptionRequestById } from "./ngoController";
 
 const router = express.Router();
 
@@ -28,6 +29,23 @@ router.get("/:id", getNGODetails);
 
 // Validate NGO ID during child insertion
 router.post("/validate-ngo", validateNgoId);
+
+//fetch adoption requests
+router.get("/adoption-request/:ngoId", getNGOAdoptionRequests );
+
+//fetch adoption details of each 
+router.get("/adoption-request-details/:requestId", getAdoptionRequestById);
+
+//adoption request upload
+router.post(
+  "/adoption-request/create",
+  cloudUpload.fields([
+    { name: "adoptionCertificate", maxCount: 1 },
+    { name: "updatedBirthCertificate", maxCount: 1 },
+    { name: "followUpUndertaking", maxCount: 1 },
+  ]),
+  submitAdoptionRequest
+);
 
 // --- NGO login route ---
 router.post("/login", loginNGO);

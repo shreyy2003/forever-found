@@ -6,6 +6,7 @@ import {
   createChild,
   getChildrenByNgo,
   updateChild,
+  getChildById
 } from "./childrenController";
 
 const router = express.Router();
@@ -24,5 +25,8 @@ router.post("/create", cloudUpload.array("gallery"), createChild);
 
 // update child → text + add images
 router.put("/update/:id", cloudUpload.array("gallery"), updateChild);
+
+// view single child who is adopted
+router.get("/:id", getChildById);
 
 export default router;

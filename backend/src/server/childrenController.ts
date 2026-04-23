@@ -129,6 +129,22 @@ export const getChildrenByNgo = async (req: Request, res: Response) => {
   }
 };
 
+//get single child details who are adopted
+export const getChildById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const child = await Child.findById(id)
+      .populate("adopterId");
+
+    if (!child)
+      return res.status(404).json({ message: "Child not found" });
+
+    res.json(child);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // ---------------- UPDATE CHILD ----------------
 export const updateChild = async (req: Request, res: Response) => {
   try {
@@ -146,7 +162,7 @@ export const updateChild = async (req: Request, res: Response) => {
     if (educationLevel !== undefined)
       child.educationLevel = educationLevel;
 
-    // ⭐⭐⭐ ADD THIS (Edit request notification)
+    // (Edit request notification)
     child.hasEditRequest = true;
     child.editRequestedAt = new Date();
 

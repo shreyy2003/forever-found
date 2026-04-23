@@ -18,6 +18,7 @@ import AdopterProfile from './pages/AdopterProfile';
 import EditAdopterProfile from './pages/Adopter_EditProfile';
 import InsertChildren from './pages/InsertChildren';
 import ViewChildren from './pages/ViewChildren';
+import ViewChildDetails from './pages/ViewChildDetails';
 import NgoProfile from './pages/NgoProfile';
 import EditNgoProfile from './pages/Ngo_EditProfile';
 import MeetingHistory from './pages/meetingHistory';
@@ -28,6 +29,9 @@ import ViewMeeting from './pages/ViewMeeting';
 import Meeting_Status_Details from './pages/Meeting_Status_Details';
 import Adopter_History from './pages/Adopter_History';
 import Adopter_History_Details from './pages/Adopter_History_Details';
+import AdoptionConfirmationPage from './pages/AdoptionConfirmationPage';
+import AdoptionHistory_NGO from './pages/AdoptionHistory_NGO';
+import AdoptionHistoryDetails_NGO from './pages/AdoptionHistoryDetails_NGO';
 
 import Admin_Login from './admin_pages/Admin_Login';
 import Admin_Home from './admin_pages/Admin_Home';
@@ -41,6 +45,8 @@ import Adopter_Approval from './admin_pages/Adopter_Approval';
 import Adopter_Approval_details from './admin_pages/Adopter_Approval_details';
 import NGO_Approval from './admin_pages/NGO_Approval';
 import NGO_Approval_details from './admin_pages/NGO_Approval_details';
+import AdoptionRequests_Admin from './admin_pages/AdoptionRequests_Admin';
+import AdoptionRequestDetails_Admin from './admin_pages/AdoptionRequestDetails_Admin';
 
 function App() {
  
@@ -53,11 +59,16 @@ function App() {
 
       <Route path="/adopter-SignUp" element={<SignUpAdopter />} />
       <Route path ="/ngo-signup" element={<SignupNgo/>}/>
+
       <Route path="/ngo-home/:id" element={<Ngo_Home />} />
       <Route path="/ngo-home/:id/insert-child" element={<InsertChildren />} />
       <Route path="/ngo-home/:id/view-children" element={<ViewChildren />} />
+      <Route path="/ngo-home/:id/child-details/:childId" element={<ViewChildDetails />} />
       <Route path="/ngo-home/:id/profile" element={<NgoProfile/>}></Route>
-      <Route path="ngo-home/:id/profile/edit" element={<EditNgoProfile/>}></Route>
+      <Route path="/ngo-home/:id/profile/edit" element={<EditNgoProfile/>}></Route>
+      <Route path="/ngo-home/:id/adoption-request/:childId" element={<AdoptionConfirmationPage/>}></Route>
+      <Route path="/ngo-home/:id/adoptions" element={<AdoptionHistory_NGO />} />
+      <Route path="/ngo-home/:id/adoption-history-details/:requestId" element={<AdoptionHistoryDetails_NGO />} />
 
       <Route path="/review-signup-form" element={<FormReviewPage />} />
       <Route path="/review-signup-form/verify/:userType/:id" element={<VerificationPage />} />
@@ -97,7 +108,10 @@ function App() {
 
       <Route path="/admin/manage-adopters" element={<ManageAdopters/>}></Route>
       <Route path="/admin/adopters/:id" element={<AdopterDetails/>}></Route>
-      
+
+      <Route path="/admin/adoption-requests" element={<AdoptionRequests_Admin/>}></Route>
+      <Route path="/admin/adoption-requests/:requestId" element={<AdoptionRequestDetails_Admin/>}></Route>
+
       </Routes>
     </Router>  
   );

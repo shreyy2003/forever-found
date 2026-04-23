@@ -4,6 +4,7 @@ import NGO from "../db/ngoModel";
 import Child from "../db/childrenModel";
 import Adopter from "../db/adopterModel";
 import Meeting from "../db/meetingsModel";
+import AdoptionRequest from "../db/AdoptionRequestModel";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -827,5 +828,146 @@ export const getAdoptedChildren = async (req: Request, res: Response) => {
     res.status(200).json(children);
   } catch {
     res.status(500).json({ message: "Failed to fetch adopted children" });
+  }
+};
+
+// GET ALL ADOPTION REQUESTS 
+export const getAllAdoptionRequests = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+
+    const requests = await AdoptionRequest.find()
+      .populate("childId")
+      .populate("ngoId")
+      .populate("adopterId")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(requests);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to fetch adoption requests",
+    });
+  }
+};
+
+// GET SINGLE ADOPTION REQUEST 
+export const getAdoptionRequestById = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+
+    const { requestId } = req.params;
+
+    const request = await AdoptionRequest.findById(requestId)
+      .populate("childId")
+      .populate("ngoId")
+      .populate("adopterId");
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Adoption request not found",
+      });
+    }
+
+    res.status(200).json(request);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to fetch adoption request",
+    });
+  }
+};
+
+export const verifyAdoptionRequest = async (req: Request, res: Response) => {
+  try {
+    const { requestId } = req.params;
+    const { status, adminRemarks } = req.body;
+
+    const request = await AdoptionRequest.findById(requestId);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    /* ---------- UPDATE REQUEST ---------- */
+
+    request.status = status;
+    request.adminRemarks = adminRemarks;
+    request.verifiedAt = new Date();
+
+    await request.save();
+
+    /* ---------- FETCH CHILD ---------- */
+
+    const child = await Child.findById(request.childId);
+
+    if (!child) {
+      return res.status(404).json({ message: "Child not found" });
+    }
+
+    /* ---------- STATUS HANDLING ---------- */
+
+    if (status === "Approved") {
+
+      child.adoptionStatus = "Adopted";
+
+      /* PLATFORM ADOPTION */
+      if (request.adopterType === "Platform") {
+        child.adopterId = request.adopterId ?? null;
+        child.externalAdopterName = null;
+      }
+
+      /* EXTERNAL ADOPTION */
+      if (request.adopterType === "External") {
+        child.adopterId = null;
+        child.externalAdopterName =
+          request.externalAdopter?.name || "External Adopter";
+      }
+    }
+
+    if (status === "Rejected") {
+      child.adoptionStatus = "Available";
+      child.adopterId = null;
+      child.externalAdopterName = null;
+    }
+
+    await child.save();
+
+    res.json({
+      message: `Adoption ${status}`,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Verification failed",
+    });
+  }
+};
+
+// GET: Adoption request count
+export const getAdoptionRequestCount = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+
+    const count = await AdoptionRequest.countDocuments({
+      status: "Pending",
+    });
+
+    res.status(200).json({ count });
+
+  } catch (error) {
+    console.error("Error fetching adoption request count:", error);
+    res.status(500).json({
+      message: "Failed to fetch adoption request count",
+    });
   }
 };

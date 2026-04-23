@@ -7,6 +7,7 @@ import { getNGODetails,blockNgo,unblockNgo,getMeetingsForNGO,getAdoptedChildrenB
 import { getChildDetailsForAdmin,getMeetingsByChildForAdmin,blockChild,unblockChild, reviewChildEdit } from "./adminController";
 import { getAdopterEditRequestCount,clearAdopterEditRequest } from "./adminController";
 import { getPendingAdopterCount,getPendingNgoCount,getNgoEditRequestCount,clearNgoEditRequest,getChildEditRequestCount } from "./adminController";
+import { getAllAdoptionRequests,getAdoptionRequestById, verifyAdoptionRequest, getAdoptionRequestCount } from "./adminController";
 const router = express.Router();
 
 router.post("/login", loginAdmin);
@@ -47,5 +48,10 @@ router.patch("/adopters/:id/block",adminAuth, blockAdopter);
 router.patch("/adopters/:id/unblock",adminAuth, unblockAdopter);
 router.get("/adopters/:id/aadhaar",adminAuth, getAdopterAadhaar);
 router.get("/adopters/:id/adopted-children",adminAuth, getAdoptedChildren);
+
+router.get("/adoption-requests/count", adminAuth, getAdoptionRequestCount);
+router.get("/adoption-requests",adminAuth, getAllAdoptionRequests);
+router.get("/adoption-requests/:requestId", adminAuth, getAdoptionRequestById);
+router.patch("/adoption-requests/:requestId/verify", adminAuth, verifyAdoptionRequest);
 
 export default router;
